@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: flapp-operator
+  name: flapp-operator
+  namespace: aliyun-leader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flapp-operator
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: flapp-operator
+    spec:
+      hostNetwork: true
+      serviceAccountName: flapp-operator
+      nodeSelector:
+        kubernetes.io/hostname: 10.3.47.24
+      containers:
+        - name: flapp-operator
+          image: hub.byted.org/fedlearner/fedlearner_operator:v0.0.3
+          imagePullPolicy: Always
+          command:
+            - "./main"
+          args:
+            - "--master=https://10.10.73.87:6443"
+            - "--etcdURL=http://10.8.19.149:4379"
+            - "--peerURL=10.3.47.24:8200"
+            - "--port=8100"
+            - "--namespace=aliyun-leader"
+            - "--resync-interval=5"
+          ports:
+            - containerPort: 8100
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "4000m"
+            limits:
+              memory: "4Gi"
+              cpu: "4000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: flapp-operator
+  name: flapp-operator
+  namespace: aliyun-follower
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flapp-operator
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: flapp-operator
+    spec:
+      hostNetwork: true
+      serviceAccountName: flapp-operator
+      nodeSelector:
+        kubernetes.io/hostname: 10.3.47.24
+      containers:
+        - name: flapp-operator
+          image: hub.byted.org/fedlearner/fedlearner_operator:v0.0.3
+          imagePullPolicy: Always
+          command:
+            - "./main"
+          args:
+            - "--master=https://10.10.73.87:6443"
+            - "--etcdURL=http://10.8.19.149:3379"
+            - "--peerURL=10.3.47.24:8100"
+            - "--port=8200"
+            - "--namespace=aliyun-follower"
+            - "--resync-interval=5"
+          ports:
+            - containerPort: 8200
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "4000m"
+            limits:
+              memory: "4Gi"
+              cpu: "4000m"
